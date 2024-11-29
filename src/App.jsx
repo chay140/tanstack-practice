@@ -1,44 +1,52 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
+import useFetchTodos from "./hooks/useFetchTodos";
+import useAddTodo from "./hooks/useAddTodo";
+import useDeleteTodo from "./hooks/useDeleteTodo";
+import useToggleTodo from "./hooks/useToggleTodo";
 
 function TodoList() {
-  const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
 
-  const fetchTodos = async () => {
-    const { data } = await axios.get("http://localhost:3000/todos");
-    setTodos(data);
-  };
+  // useQuery
+  // 7 단계 : 가져오기
+  const { todos, isPending, isError } = useFetchTodos();
 
-  const addTodo = async () => {
+  // useMutation
+  // 5 + 6단계 : 추가, 삭제, 토글
+  // 8 단계 hook으로 나누기
+  const { mutate: addMutation } = useAddTodo();
+  const { mutate: deleteMutation } = useDeleteTodo();
+  const { mutate: toggleMutation } = useToggleTodo();
+
+  const handleAddTodo = async () => {
     if (!newTodo.trim()) return;
-    const { data } = await axios.post("http://localhost:3000/todos", {
-      title: newTodo,
-      completed: false,
-    });
-    setTodos((prev) => [...prev, data]);
-    setNewTodo("");
+    addMutation(newTodo);
   };
 
-  const deleteTodo = async (id) => {
-    await axios.delete(`http://localhost:3000/todos/${id}`);
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+  const handleDeleteTodo = async (id) => {
+    deleteMutation(id);
   };
 
-  const toggleComplete = async (id, completed) => {
-    const { data } = await axios.patch(`http://localhost:3000/todos/${id}`, {
-      completed: !completed,
-    });
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, completed: data.completed } : todo,
-      ),
+  const handleToggleComplete = async (id, completed) => {
+    toggleMutation({ id, completed });
+  };
+
+  if (isPending) {
+    return (
+      <div style={styles.container}>
+        <h1 style={styles.title}>Todo List</h1>
+        <p>로딩 중...</p>
+      </div>
     );
-  };
-
-  useEffect(() => {
-    fetchTodos();
-  }, []);
+  }
+  if (isError) {
+    return (
+      <div style={styles.container}>
+        <h1 style={styles.title}>Todo List</h1>
+        <p>에러 발생!!</p>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -51,12 +59,12 @@ function TodoList() {
           placeholder="Add a new todo"
           style={styles.input}
         />
-        <button onClick={addTodo} style={styles.addButton}>
+        <button onClick={handleAddTodo} style={styles.addButton}>
           Add Todo
         </button>
       </div>
       <div style={styles.cardContainer}>
-        {todos.map((todo) => (
+        {todos?.map((todo) => (
           <div key={todo.id} style={styles.card}>
             <div style={styles.cardContent}>
               <p
@@ -70,13 +78,13 @@ function TodoList() {
               </p>
               <div style={styles.buttonGroup}>
                 <button
-                  onClick={() => toggleComplete(todo.id, todo.completed)}
+                  onClick={() => handleToggleComplete(todo.id, todo.completed)}
                   style={styles.completeButton}
                 >
                   {todo.completed ? "Undo" : "Complete"}
                 </button>
                 <button
-                  onClick={() => deleteTodo(todo.id)}
+                  onClick={() => handleDeleteTodo(todo.id)}
                   style={styles.deleteButton}
                 >
                   Delete
