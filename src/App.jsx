@@ -1,22 +1,17 @@
 import { useState } from "react";
-import useFetchTodos from "./hooks/useFetchTodos";
-import useAddTodo from "./hooks/useAddTodo";
-import useDeleteTodo from "./hooks/useDeleteTodo";
-import useToggleTodo from "./hooks/useToggleTodo";
+import useTodos from "./hooks/useTodos";
 
 function TodoList() {
   const [newTodo, setNewTodo] = useState("");
 
-  // useQuery
-  // 7 단계 : 가져오기
-  const { todos, isPending, isError } = useFetchTodos();
-
-  // useMutation
-  // 5 + 6단계 : 추가, 삭제, 토글
-  // 8 단계 hook으로 나누기
-  const { mutate: addMutation } = useAddTodo();
-  const { mutate: deleteMutation } = useDeleteTodo();
-  const { mutate: toggleMutation } = useToggleTodo();
+  const {
+    todos,
+    isPending,
+    isError,
+    addMutation,
+    deleteMutation,
+    toggleMutation,
+  } = useTodos();
 
   const handleAddTodo = async () => {
     if (!newTodo.trim()) return;
